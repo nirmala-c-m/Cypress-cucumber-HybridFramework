@@ -117,11 +117,13 @@ Execution configurations can be set in `cypress-cucumber-preprocessor` and `cypr
 
 ## Read test data
 **cypress/utils/dataReader.js**<br>
-Test data reading start from test data path provided in step defined in the feature file. Test data is provided in JSON file in `TestData/{feature name}/{test case01}` path. data reading is implimented in `src/utils/dataReader.ts`.
+Test data reading start from test data path provided in step defined in the feature file. Test data is provided in JSON file in `TestData/{feature name}/{test case01}` path. data reading is implimented in `cypress/utils/dataReader.js`.
+Since we're using cypress-cucumber-preprocessor for testing, the native Cypress report might not be sufficient. Instead, we use multiple-cucumber-html-reporter.
 
 ## Test reporting
-**src/utils/reporter/reporter.ts**<br>
-Since we are using `cucumber-js` to run the tests, playwright report is cannot be used(https://github.com/cucumber/cucumber-js/issues/2221), hence we will use multiple-cucumber-html-reporter.
+(Please Note: multiple-cucumber-html-reporter is not implemetned in this framework )
+**scypress/utils/reporter/reporter.js**<br>
+Since we are using `cypress-cucumber-preprocessor` to run the tests,  the native Cypress report might not be sufficient. Instead, we use `multiple-cucumber-html-reporter`. 
 
 **Impliment multiple-cucumber-html-reporter**<br>
 * Use formater in `cucumber.js` to create json from cucumber report.
@@ -129,41 +131,27 @@ Since we are using `cucumber-js` to run the tests, playwright report is cannot b
 * After the test execution, use `node reporter.ts` command to execute `reporter.ts` then it will convert json to cucumber-html-reporter.
 * We dont want to execute command manually every time after a test execution, So we are putting the same command inside posttest.
 `"posttest": "npx ts-node src/utils/reporter.ts"` in package.js
-
 cucumber-html-reporter is more npm trendier than other reporters like allure reporter etc. thats why i choose this reporter.
 
 
 ## Scenario context
-**src/utils/scenarioContext.ts**<br>
-It is a is an isolated scope for each scenario. All the operations which are common in scenario level like page object, test data, page etc data passing between test step are
-done through cucumber world object(https://github.com/cucumber/cucumber-js/blob/main/docs/support_files/world.md). i.e. During the execution if we want to share the page or store the order number in one step and use that order number in different step, then we need to use `scenariocontext.ts`.
+**cypress/utils/scenarioContext.js**<br>
+Scenario context isolates scope for each scenario. All common operations at the scenario level, such as passing data between steps, are managed via the Cucumber world object. This allows sharing data like page objects or order numbers between steps.
+
 
 ## Logs
-**src/utils/logger/logger.ts**<br>
-We are using winston package for logging. we will manage log start and stop process in the hooks. We are sharing the log object between classes using fixture. same thing we can do using scenariocontext as well. Not any particular reason but just want to use fixture in the framework as well. Each scenario will have seperate log file.
+**cypress/utils/logger/logger.js**<br>
+We use the Winston package for logging. Logs are managed in hooks, and the log object is shared between classes using fixtures. Each scenario has a separate log file.
+
 
 ## Other utils
-* **src/utils/browserManager.ts** - Manages browser selection as well aas browser settings like headless, timeout, maximise option etc.
-* **src/utils/hooks.ts** - Manages Before, BeforeAll, BeforeStep, AfterStep, After, AfterAll through that manages page object initialisation, browser context creation, browser invoking, logging, tracing etc.
-* **src/utils/preTest.ts** - clears test-results folder after each execution, This is executed from `pretest` script in the `package.json`.
+* **cypress/utils/browserManager.js** - Manages browser selection and settings like headless mode, timeouts, and maximization.
+* **cypress/utils/hooks.js** -Manages hooks like `Before`, `After`, `BeforeStep`, `AfterStep`, and coordinates browser context creation, page object initialization, logging, and tracing.
+* **cypress/utils/preTest.js** - clears test-results folder after each execution, This is executed from `pretest` script in the `package.json`.
 
 ## Test output
-* The output of the test execution like order number, payment id etc. can be logged in report for the later use, so didn't create any other mechanism for that. Checkout `src/steps/CommonStepDef.ts`.
+*Test execution outputs, like order numbers or payment IDs, are logged in the report for later use. See `cypress/step_definitions/CommonStepDef.js`.
 
-## Other features
-* Added Same test case with multiple types of data - Scenario outline mode
-* Can execute in paralell mode, this can be controlled from cucucmber.js
-* Added cucumber world for managing the state of page object, class object etc
-* Added `InteractionHelper` class so less code in step def classes
-* Most of the exceptions are also handling in `InteractionHelper` class
-
-## Why and why Not
-* OOPS, used in framework - `scenarioContext.ts`, for implimenting cucumber world
-* Design pattern used
-	* Added factory design pattern in the framework - selecting the browser mechanism
-	* DI injection in Test context
-* No need to put the locators in exec or properties file because it's not efficient, if we implement such ecosystem we have to create and maintain separate files and related class to maintain that ecosystem which is an overkill
-* instead of cucumber.json we are using cucumber.js(not*.ts beacause we will be during execution it will convert to js hence creating the file in js), because using *.json we cannot pass parameter like tags or anything from command line because it is a static file so if we convert to js file we can pass parameter.
 
 ## Feature need to add
 * dockerized the framework
